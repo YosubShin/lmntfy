@@ -1,0 +1,53 @@
+<section data-ng-controller="ScriptsController" data-ng-init="findOne()">
+	<div class="page-header">
+		<h1>Edit Script</h1>
+	</div>
+	<div class="col-md-12">
+		<form name="scriptForm" class="form-horizontal" data-ng-submit="update(scriptForm.$valid)" novalidate>
+			<fieldset>
+				<div class="form-group" ng-class="{ 'has-error' : submitted && scriptForm.title.$invalid}">
+					<label class="control-label" for="title">Title</label>
+					<div class="controls">
+						<input name="title" type="text" data-ng-model="script.title" id="title" class="form-control" placeholder="Title" required>
+					</div>
+					<div ng-show="submitted && scriptForm.title.$invalid" class="help-block">
+						<p ng-show="scriptForm.title.$error.required" class="text-danger">Title is required</p>
+					</div>
+				</div>
+                                <div class="form-group" ng-class="{ 'has-error' : submitted && scriptForm.period.$invalid}">
+					<label class="control-label" for="period">Period</label>
+					<div class="controls">
+						<input name="period" type="text" data-ng-model="script.period" id="period" class="form-control" placeholder="Period(in seconds)" required>
+					</div>
+					<div ng-show="submitted && scriptForm.period.$invalid" class="help-block">
+						<p ng-show="scriptForm.period.$error.required" class="text-danger">Period is required</p>
+					</div>
+				</div>
+                                <div class="form-group" ng-class="{ 'has-error' : submitted && scriptForm.url.$invalid}">
+					<label class="control-label" for="url">URL</label>
+					<div class="controls">
+						<input name="url" type="text" data-ng-model="script.url" id="url" class="form-control" placeholder="URL" required>
+					</div>
+					<div ng-show="submitted && scriptForm.url.$invalid" class="help-block">
+						<p ng-show="scriptForm.url.$error.required" class="text-danger">URL is required</p>
+					</div>
+				</div>
+				<div class="form-group" ng-class="{ 'has-error' : submitted && scriptForm.content.$invalid}">
+					<label class="control-label" for="content">Content</label>
+					<div class="controls">
+						<textarea name="content" data-ng-model="script.content" id="content" class="form-control" cols="30" rows="10" placeholder="Content" required></textarea>
+					</div>
+					<div ng-show="submitted && scriptForm.content.$invalid" class="help-block">
+						<p ng-show="scriptForm.content.$error.required" class="text-danger">Content is required</p>
+					</div>
+				</div>
+				<div class="form-group">
+					<input type="submit" value="Update" class="btn btn-default">
+				</div>
+				<div data-ng-show="error" class="text-danger">
+					<strong data-ng-bind="error"></strong>
+				</div>
+			</fieldset>
+		</form>
+	</div>
+</section>
