@@ -3,7 +3,7 @@
 /**
  * Module dependencies.
  */
-var mongoose = require('mongoose'),
+var mongoose = require('mongoose-q')(require('mongoose')),
     Script = mongoose.model('Script'),
     Trigger = mongoose.model('Trigger'),
     util = require('util'),
@@ -14,13 +14,14 @@ function enqueue(rawTrigger) {
     console.log('Engueuing trigger %j', rawTrigger);
     var deferred = Q.defer();
     var trigger = new Trigger(rawTrigger);
-    trigger.save(function(err) {
-        if (err) {
-            deferred.reject(err);
-        } else {
+    trigger.saveQ()
+        .then(function(result) {
             deferred.resolve(trigger);
-        }
-    });
+        })
+        .fail(function(err) {
+            deferred.reject(err);
+        })
+        .done();
     return deferred.promise;
 }
 exports.enqueue = enqueue;
@@ -35,33 +36,25 @@ function execute(trigger) {
     console.log('TODO This is supposed to be actual work.');
     setTimeout(function() {
         trigger.state = 'finished';
-        trigger.save(function(err) {
-            if (err) {
-                console.error('Unable to update trigger into Database.');
-                deferred.reject(err);
-            } else {                
-                console.log('Finished executing trigger');
-                Script.findById(trigger.script, function(err, script) {
-                    if (err) {
-                        console.error('Unable to find script');
-                        deferred.reject(err);
-                    }
-                    if (script.active === true) {
-                        enqueue({
-                            script: trigger.script, 
-                            state: 'created', 
-                            triggerAt: Date.now() + script.period * 1000, 
-                            active: true
-                        }).done(function() {
-                            deferred.resolve(trigger);    
-                        });
-                    } else {
-                        console.log('Script is not active, not enqueuing anymore...');
-                        deferred.resolve(trigger);
-                    }
+        trigger.saveQ()
+            .then(function(result) {
+                return Script.findByIdQ(trigger.script);
+            })
+            .then(function(script) {
+                return enqueue({
+                    script: trigger.script, 
+                    state: 'created', 
+                    triggerAt: Date.now() + script.period * 1000, 
+                    active: true
                 });
-            }
-        });
+            })
+            .then(function(result) {
+                deferred.resolve(trigger);
+            })
+            .fail(function(err) {
+                deferred.reject(err);
+            })
+            .done();
     }, 1);
 
     return deferred.promise;
@@ -74,28 +67,29 @@ function execute(trigger) {
         .where('triggerAt').lt(Date.now())
         .sort('triggerAt')
         .limit(1)
-        .exec(function(err, triggers) {
-            if (err) {
-                console.error('Error while fetching Triggers', err);
-            } else {
-                var promises = [];
-                for (var i = 0, len = triggers.length; i < len; ++i) {
-                    var trigger = triggers[i];
-                    promises[i] = execute(trigger).timeout(10000);
+        .execQ()
+        .then(function(triggers) {
+            var promises = [];
+            triggers.forEach(function(trigger, index) {
+                promises[index] = execute(trigger).timeout(10000);
+            });
+            return Q.allSettled(promises);
+        })
+        .then(function(results) {
+            results.forEach(function (result) {
+                if (result.state === 'fulfilled') {
+                    console.log('Finished processing trigger ' + result.value);
+                } else {
+                    console.error('Error occurred while executing the trigger %j, with reason %j', result.value, result.reason);
                 }
-                Q.allSettled(promises)
-                    .then(function(results) {
-                        results.forEach(function (result, index) {
-                            if (result.state === 'fulfilled') {
-                                console.log('Finished processing trigger ' + result.value);
-                            } else {
-                                console.error('Error occurred while executing the trigger %j, with reason %j', triggers[index], result.reason);
-                            }
-                        });
-                    }).then(function() {
-                        //Recursively call itself to generate loop, use setTimeout to not grow stack
-                        setTimeout(loop, 1000);
-                    });
-            }
-        });
+            });
+        })
+        .then(function() {
+            //Recursively call itself to generate loop, use setTimeout to not grow stack
+            setTimeout(loop, 1000);
+        })
+        .fail(function(err) {
+            console.error('Error while fetching Triggers... Stopping the loop', err);
+        })
+        .done();
 })();

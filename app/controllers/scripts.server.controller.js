@@ -3,7 +3,7 @@
 /**
  * Module dependencies.
  */
-var mongoose = require('mongoose'),
+var mongoose = require('mongoose-q')(require('mongoose')),
     errorHandler = require('./errors'),
     Script = mongoose.model('Script'),
     Trigger = mongoose.model('Trigger'),
@@ -20,24 +20,20 @@ exports.create = function(req, res) {
     //TODO TBD
     script.active = true;
 
-    script.save(function(err) {
-	if (err) {
-	    return res.status(400).send({
-		message: errorHandler.getErrorMessage(err)
-	    });
-	} else {
+    script.saveQ()
+        .then(function(result) {
             var trigger = {script: script._id, state: 'created'};
-            triggerService.enqueue(trigger)
-                .then(function(trigger) {
-                    res.jsonp(script);
-                })
-                .fail(function(err) {
-                    return res.status(400).send({
-			message: errorHandler.getErrorMessage(err)
-		    }); 
-                });
-	}
-    });
+            return triggerService.enqueue(trigger);
+        })
+        .then(function(trigger) {
+            res.jsonp(script);
+        })
+        .fail(function(err) {
+            return res.status(400).send({
+		message: errorHandler.getErrorMessage(err)
+	    }); 
+        })
+        .done();
 };
 
 /**
