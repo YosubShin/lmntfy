@@ -40,6 +40,7 @@
     "passport-local": "~1.0.0",
     "passport-twitter": "~1.0.2",
     "q": "^1.0.1",
+    "spooky": "^0.2.4",
     "swig": "~1.4.1"
   },
   "devDependencies": {
