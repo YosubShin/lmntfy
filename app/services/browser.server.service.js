@@ -109,9 +109,11 @@ exports.run = function(script, trigger) {
             deferred.reject('Result does not exists for executed script, %j', scriptId);
         } else if (result.error) {
             deferred.reject('Error occurred while executing the script. %j', result.error);
-        } else if (!result.result || !result.database) {
-            deferred.reject('result or database field does not exists for executed script, %j', result);
+        } else if (!result.database) {
+            deferred.reject('database field does not exists for executed script, %j', result);
         } else {
+            //TODO update database
+            
             deferred.resolve(result.result);
         }        
     });

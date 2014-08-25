@@ -75,11 +75,11 @@ angular.module('scripts').directive('nagPrism', ['$compile', '$timeout', functio
         },
         link: function(scope, element, attrs, controller, transclude) {
             scope.$watch('source', function(v) {
-              element.find("code").html(v);
+              element.find('code').html(v);
                 
-              Prism.highlightElement(element.find("code")[0]);
+              Prism.highlightElement(element.find('code')[0]);
             });
         },
-        template: "<code></code>"
+        template: '<code></code>'
     };
 }]);

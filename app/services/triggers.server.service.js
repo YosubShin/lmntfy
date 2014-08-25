@@ -37,7 +37,7 @@ function execute(trigger) {
         .then(function(result) {
             script = result;            
             console.log('Running browser script %j', script);
-            return browser.run(script, trigger).timeout(10000);
+            return browser.run(script, trigger).timeout(30000);
         })
         .then(function(result) {
             console.log('Finished running script with result %j', result);
@@ -89,7 +89,7 @@ function execute(trigger) {
         .then(function(triggers) {
             var promises = [];
             triggers.forEach(function(trigger, index) {
-                promises[index] = execute(trigger).timeout(10000);
+                promises[index] = execute(trigger).timeout(30000);
             });
             return Q.allSettled(promises);
         })
