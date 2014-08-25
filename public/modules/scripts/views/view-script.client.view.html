@@ -23,7 +23,8 @@
         <h2>URL</h2>
         <p class="lead" data-ng-bind="script.url"></p>
         <h2>Content</h2>
-	<p class="lead" data-ng-bind="script.content"></p>
+	<pre nag-prism class="language-javascript" source="{{script.content}}">
+        </pre>
         <h2>Triggers</h2>
         <div class="list-group">
 		<a data-ng-repeat="trigger in script.triggers" data-ng-href="#!/triggers/{{trigger._id}}" class="list-group-item">

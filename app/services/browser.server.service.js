@@ -50,6 +50,7 @@ exports.run = function(script, trigger) {
         }
         deferredMap[script._id] = deferred;
 
+        console.log('The script about to be executed:\n %s', script.content);
 
         spooky.start(script.url);
         spooky.then([{
@@ -109,7 +110,7 @@ exports.run = function(script, trigger) {
         } else if (result.error) {
             deferred.reject('Error occurred while executing the script. %j', result.error);
         } else if (!result.result || !result.database) {
-            deferred.reject('result or database field does exists for executed script, %j', scriptId);
+            deferred.reject('result or database field does not exists for executed script, %j', result);
         } else {
             deferred.resolve(result.result);
         }        

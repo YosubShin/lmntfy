@@ -60,3 +60,26 @@ angular.module('scripts').controller('ScriptsController', ['$scope', '$statePara
 		};
 	}
 ]);
+
+/*
+ Take a look at the link to see how to enable syntax highlight in AngularJS
+ @link http://stackoverflow.com/questions/22742899/using-prismjs-in-angular-app
+*/
+angular.module('scripts').directive('nagPrism', ['$compile', '$timeout', function($compile, $timeout) {
+    return {
+        restrict: 'A',
+        transclude: true,
+        scope: {
+          source: '@',
+          code: '@'
+        },
+        link: function(scope, element, attrs, controller, transclude) {
+            scope.$watch('source', function(v) {
+              element.find("code").html(v);
+                
+              Prism.highlightElement(element.find("code")[0]);
+            });
+        },
+        template: "<code></code>"
+    };
+}]);
