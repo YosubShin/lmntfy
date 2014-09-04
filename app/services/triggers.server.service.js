@@ -41,6 +41,7 @@ function execute(trigger) {
         })
         .then(function(result) {
             console.log('Finished running script with result %j', result);
+            //TODO Inspect result, and do notification if result contains data
             trigger.state = 'finished';
             return trigger.saveQ();
         })

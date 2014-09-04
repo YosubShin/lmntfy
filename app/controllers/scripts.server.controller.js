@@ -42,18 +42,20 @@ exports.create = function(req, res) {
 exports.read = function(req, res) {
     console.log('Start reading script');
     var result = req.script.toObject();
-    Trigger.find({script: req.script.id}).sort('-created').exec(function(err, triggers) {
-        if (err) {
-            console.log('About to send 400');
-	    return res.status(400).send({
-		message: errorHandler.getErrorMessage(err)
-	    });
-	} else {
-            console.log('About to send 200 response');
+    Trigger
+        .find({script: req.script.id})
+        .sort('-created')
+        .limit(5)
+        .execQ()
+        .then(function(triggers) {
             result.triggers = triggers;
             res.jsonp(result);
-	}
-    });
+        })
+        .fail(function(err) {
+	    res.status(400).send({
+		message: errorHandler.getErrorMessage(err)
+	    });
+        });
 };
 
 /**

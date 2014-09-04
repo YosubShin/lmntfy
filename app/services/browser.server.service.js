@@ -4,9 +4,10 @@
  * Module dependencies.
  */
 var util = require('util'),
-    Q = require('q');
+    Q = require('q'),
+    mongoose = require('mongoose-q')(require('mongoose')),
+    Script = mongoose.model('Script');
 
-var database = {};
 var deferredMap = {};
 
 try {
@@ -14,13 +15,6 @@ try {
 } catch (e) {
     var Spooky = require('../lib/spooky');
 }
-
-var theScript = 
-        '(function(){console.log(\'Here I am the injected script! \' + document.location);' + 
-        'console.log(\'database : \' + JSON.stringify(database));' +
-        'database.newKey = \'New Value\';' +
-        'return null;})();';
-
 
 exports.run = function(script, trigger) {
     console.log('Running script %j, for trigger %j', script, trigger);
@@ -42,9 +36,6 @@ exports.run = function(script, trigger) {
         }
 
         // No error initializing SpookyJS
-        if (!database[script._id]) {
-            database[script._id] = {};
-        }
         if (deferredMap[script._id]) {
             throw new Error('Does not expect deferred object for script id exists, but it is!');
         }
@@ -54,8 +45,7 @@ exports.run = function(script, trigger) {
 
         spooky.start(script.url);
         spooky.then([{
-            script: script,
-            database: database[script._id]
+            script: script
         }, function () {
             // CasperJS's context
             var ret = this.evaluate(function (script, database) {
@@ -69,7 +59,7 @@ exports.run = function(script, trigger) {
                     console.log('Error in browser : ' + err);
                     return {error : err};
                 }
-            }, {script: script.content, database: database});
+            }, {script: script.content, database: JSON.parse(script.database)});
             this.emit('scriptIsDone', ret, script._id);
         }]);
         spooky.run();
@@ -112,9 +102,19 @@ exports.run = function(script, trigger) {
         } else if (!result.database) {
             deferred.reject('database field does not exists for executed script, %j', result);
         } else {
-            //TODO update database
-            
-            deferred.resolve(result.result);
+            // Update Script with updated database
+            Script.findByIdQ(scriptId)
+                .then(function(script) {
+                    script.database = JSON.stringify(result.database);
+                    return script.saveQ();
+                })
+                .then(function() {
+                    deferred.resolve(result.result);
+                })
+                .fail(function(err) {
+                    deferred.reject('Error while trying to save Script with updated database', err);
+                })
+                .done();
         }        
     });
     return deferred.promise;
